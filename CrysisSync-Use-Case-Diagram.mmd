@@ -1,59 +1,118 @@
+%% Mermaid mirror of useCase.puml (PlantUML is the source of truth).
+%% Mermaid has no use-case diagram type: actors = boxes, use cases = stadiums,
+%% generalization = solid arrow child --> parent, include/extend = dashed labeled arrows.
+%% Extension points and extend conditions are listed in useCase.puml.
 flowchart LR
 
-  subgraph PrimaryActors["Primary Human Actors"]
+  subgraph HumanActors["Human Actors"]
+    direction TB
+    USER["«abstract» User"]
     SA["System Administrator"]
-    LO["Logistics Officer"]
+    LO["Logistics & Resources Officer"]
     D["Dispatcher"]
+    FP["«abstract» Field Personnel"]
     FC["Field Commander"]
     FCM["Field Crew Member"]
   end
 
   subgraph CrisisSync["CrisisSync"]
-    MU(["Manage Users"])
-    MP(["Manage Permissions"])
-    LD(["Load Data"])
-    VEH(["View Event History"])
-    PML(["Produce Management Logs"])
+    direction TB
+    Login(["Log In"])
+    RejectLogin(["Reject Invalid Login"])
 
-    UMS(["Update Maintenance Status"])
-    MT(["Move Tools"])
-    USA(["Update Staff Availability"])
+    ManageUsers(["Manage User Accounts & Permissions"])
+    LoadData(["Load Initial Data"])
+    EventHistory(["View Event History"])
+    GenerateReport(["Generate Report"])
+    SLAReport(["Produce SLA Compliance Report"])
+    UtilizationReport(["Produce Resource Utilization Report"])
+    ViewReports(["View Reports"])
 
-    MLS(["Monitor Live Event Status"])
-    OEE(["Open Emergency Event"])
-    DTT(["Define Task Tree"])
-    CES(["Close Emergency Event and Settle Costs"])
+    Maintenance(["Update Equipment Maintenance Status"])
+    TransferEquipment(["Transfer Equipment Between Stations"])
+    ExceptionalAvailability(["Update Crew Member Exceptional Availability"])
 
-    RTC(["Report Task Completion"])
-    RSS(["Report Shift Start and Readiness"])
-    VAT(["View Task Details"])
-    REM(["Report Equipment Malfunction"])
+    OpenEvent(["Open Event"])
+    CancelEvent(["Cancel Event"])
+    ManageTaskTree(["Manage Task Tree"])
+    RejectCycle(["Reject Cyclic Dependency"])
+    ReserveResources(["Reserve Resources for Task"])
+    AutoAllocation(["Request Automatic Allocation"])
+    RetryAlternative(["Retry with Alternative Resource"])
+    RejectReservation(["Reject Unavailable Reservation"])
+    ReplaceEquipment(["Allocate Replacement Equipment"])
+    CancelTask(["Cancel Task"])
+    CancelDependents(["Cancel Dependent Tasks"])
+    ReleaseResources(["Release Task Resources"])
+    EventStatus(["View Event Status Screen"])
+    CloseEvent(["Close Event & Settle Costs"])
+    CalculateCosts(["Calculate Operating Costs"])
+    SettlementRejection(["Handle Settlement Rejection"])
+
+    TaskCompletion(["Report Task Completion"])
+    TaskDetails(["View Task Details"])
+    EquipmentMalfunction(["Report Equipment Malfunction"])
+    ShiftReadiness(["Report Shift Start & Readiness"])
   end
 
-  subgraph ExternalSystems["External Systems"]
-    EBS["External Billing System"]
+  subgraph NonHumanActors["Non-Human Actors"]
+    direction TB
+    NCSS["National Clearing & Settlement System"]
+    SCHED["Scheduler"]
   end
 
-  SA --- MU
-  SA --- MP
-  SA --- LD
-  SA --- VEH
-  SA --- PML
+  %% Generalization (child --> parent)
+  SA --> USER
+  LO --> USER
+  D --> USER
+  FP --> USER
+  FC --> FP
+  FCM --> FP
 
-  LO --- UMS
-  LO --- MT
-  LO --- USA
+  %% Associations (plain lines, no arrows)
+  USER --- Login
 
-  D --- MLS
-  D --- OEE
-  D --- DTT
-  D --- CES
+  SA --- ManageUsers
+  SA --- LoadData
+  SA --- EventHistory
+  SA --- GenerateReport
+  SA --- ViewReports
 
-  FC --- MLS
-  FC --- RTC
+  LO --- Maintenance
+  LO --- TransferEquipment
+  LO --- ExceptionalAvailability
 
-  FCM --- RSS
-  FCM --- VAT
-  FCM --- REM
+  D --- OpenEvent
+  D --- CancelEvent
+  D --- ManageTaskTree
+  D --- ReserveResources
+  D --- ReplaceEquipment
+  D --- CancelTask
+  D --- EventStatus
+  D --- CloseEvent
 
-  EBS --- CES
+  FC --- EventStatus
+  FC --- TaskCompletion
+  FP --- TaskDetails
+  FP --- EquipmentMalfunction
+  FCM --- ShiftReadiness
+
+  CloseEvent --- NCSS
+  GenerateReport --- SCHED
+
+  %% include: base -.-> included
+  CancelEvent -. "«include»" .-> ReleaseResources
+  CancelTask -. "«include»" .-> ReleaseResources
+  TaskCompletion -. "«include»" .-> ReleaseResources
+  GenerateReport -. "«include»" .-> SLAReport
+  GenerateReport -. "«include»" .-> UtilizationReport
+  CloseEvent -. "«include»" .-> CalculateCosts
+
+  %% extend: extension -.-> base
+  RejectLogin -. "«extend»" .-> Login
+  RejectCycle -. "«extend»" .-> ManageTaskTree
+  AutoAllocation -. "«extend»" .-> ReserveResources
+  RetryAlternative -. "«extend»" .-> AutoAllocation
+  RejectReservation -. "«extend»" .-> ReserveResources
+  CancelDependents -. "«extend»" .-> CancelTask
+  SettlementRejection -. "«extend»" .-> CloseEvent

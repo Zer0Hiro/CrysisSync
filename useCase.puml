@@ -24,13 +24,19 @@ FP <|-- FCM
 
 ' ===== System boundary =====
 rectangle "CrisisSync" {
-  usecase "Log In" as Login
+  usecase Login as "Log In
+--
+extension points:
+credential validation"
+  usecase "Reject Invalid Login" as RejectLogin
 
   ' --- Administration ---
   usecase "Manage User Accounts & Permissions" as ManageUsers
   usecase "Load Initial Data" as LoadData
   usecase "View Event History" as EventHistory
   usecase "Generate Report" as GenerateReport
+  usecase "Produce SLA Compliance Report" as SLAReport
+  usecase "Produce Resource Utilization Report" as UtilizationReport
   usecase "View Reports" as ViewReports
 
   ' --- Resource Management ---
@@ -41,13 +47,36 @@ rectangle "CrisisSync" {
   ' --- Event & Task Management ---
   usecase "Open Event" as OpenEvent
   usecase "Cancel Event" as CancelEvent
-  usecase "Manage Task Tree" as ManageTaskTree
-  usecase "Reserve Resources for Task" as ReserveResources
-  usecase "Cancel Task" as CancelTask
+  usecase ManageTaskTree as "Manage Task Tree
+--
+extension points:
+dependency change"
+  usecase "Reject Cyclic Dependency" as RejectCycle
+  usecase ReserveResources as "Reserve Resources for Task
+--
+extension points:
+resource selection
+transaction commit"
+  usecase AutoAllocation as "Request Automatic Allocation
+--
+extension points:
+resource conflict"
+  usecase "Retry with Alternative Resource" as RetryAlternative
+  usecase "Reject Unavailable Reservation" as RejectReservation
+  usecase "Allocate Replacement Equipment" as ReplaceEquipment
+  usecase CancelTask as "Cancel Task
+--
+extension points:
+after task selection"
   usecase "Cancel Dependent Tasks" as CancelDependents
   usecase "Release Task Resources" as ReleaseResources
   usecase "View Event Status Screen" as EventStatus
-  usecase "Close Event & Settle Costs" as CloseEvent
+  usecase CloseEvent as "Close Event & Settle Costs
+--
+extension points:
+settlement response"
+  usecase "Calculate Operating Costs" as CalculateCosts
+  usecase "Handle Settlement Rejection" as SettlementRejection
 
   ' --- Field Operations ---
   usecase "Report Task Completion" as TaskCompletion
@@ -73,6 +102,7 @@ D -- OpenEvent
 D -- CancelEvent
 D -- ManageTaskTree
 D -- ReserveResources
+D -- ReplaceEquipment
 D -- CancelTask
 D -- EventStatus
 D -- CloseEvent
@@ -91,9 +121,26 @@ GenerateReport -- SCHED
 CancelEvent ..> ReleaseResources : <<include>>
 CancelTask ..> ReleaseResources : <<include>>
 TaskCompletion ..> ReleaseResources : <<include>>
+GenerateReport ..> SLAReport : <<include>>
+GenerateReport ..> UtilizationReport : <<include>>
+CloseEvent ..> CalculateCosts : <<include>>
 
 ' ===== Extend (extension ..> base) =====
+RejectLogin ..> Login : <<extend>>
+RejectCycle ..> ManageTaskTree : <<extend>>
+AutoAllocation ..> ReserveResources : <<extend>>
+RetryAlternative ..> AutoAllocation : <<extend>>
+RejectReservation ..> ReserveResources : <<extend>>
 CancelDependents ..> CancelTask : <<extend>>
+SettlementRejection ..> CloseEvent : <<extend>>
+
+' ===== Extend conditions (extension point: condition) =====
+' Reject Invalid Login         -> credential validation: {username or password is wrong}
+' Reject Cyclic Dependency     -> dependency change: {new dependency would create a cycle}
+' Request Automatic Allocation -> resource selection: {Dispatcher chooses automatic allocation}
+' Retry with Alt. Resource     -> resource conflict: {chosen resource taken concurrently; max 2 retries}
+' Reject Unavailable Reserv.   -> transaction commit: {a requested resource is not available; rollback}
+' Handle Settlement Rejection  -> settlement response: {external system rejects the settlement}
 note right of CancelDependents
   Condition: {task has dependent
   tasks that are not final}
