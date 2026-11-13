@@ -1,0 +1,26 @@
+# Visual Paradigm: automatic backups and lock files (keep the .vpp itself)
+*.vpp.bak_*
+*.vpp.lck
+
+# Submission archive (built from the .vpp and REQUIREMENTS.md)
+G*_Assignment*.zip
+
+# Office / LibreOffice lock files
+.~lock.*#
+~$*
+
+# IntelliJ IDEA (shared project files in .idea/ stay tracked; .idea/.gitignore covers the rest)
+*.iws
+out/
+
+# Java build output (semester project)
+*.class
+target/
+build/
+.gradle/
+
+# OS and editor junk
+.DS_Store
+Thumbs.db
+*~
+*.swp
