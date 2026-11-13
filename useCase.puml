@@ -12,14 +12,15 @@ actor "//Field Personnel//" as FP <<abstract>>
 actor "Field Commander" as FC
 actor "Field Crew Member" as FCM
 actor "National Clearing & Settlement System" as NCSS
+actor "Scheduler" as SCHED
 
-' ===== Actor generalization (child --|> parent) =====
-SA --|> USER
-LO --|> USER
-D --|> USER
-FP --|> USER
-FC --|> FP
-FCM --|> FP
+' ===== Actor generalization (parent <|-- child: arrow still points to parent; parent is laid out to the left) =====
+USER <|-- SA
+USER <|-- LO
+USER <|-- D
+USER <|-- FP
+FP <|-- FC
+FP <|-- FCM
 
 ' ===== System boundary =====
 rectangle "CrisisSync" {
@@ -29,7 +30,8 @@ rectangle "CrisisSync" {
   usecase "Manage User Accounts & Permissions" as ManageUsers
   usecase "Load Initial Data" as LoadData
   usecase "View Event History" as EventHistory
-  usecase "Generate & View Reports" as Reports
+  usecase "Generate Report" as GenerateReport
+  usecase "View Reports" as ViewReports
 
   ' --- Resource Management ---
   usecase "Update Equipment Maintenance Status" as Maintenance
@@ -41,10 +43,7 @@ rectangle "CrisisSync" {
   usecase "Cancel Event" as CancelEvent
   usecase "Manage Task Tree" as ManageTaskTree
   usecase "Reserve Resources for Task" as ReserveResources
-  usecase CancelTask as "Cancel Task
---
-extension points:
-after task selection"
+  usecase "Cancel Task" as CancelTask
   usecase "Cancel Dependent Tasks" as CancelDependents
   usecase "Release Task Resources" as ReleaseResources
   usecase "View Event Status Screen" as EventStatus
@@ -63,7 +62,8 @@ USER -- Login
 SA -- ManageUsers
 SA -- LoadData
 SA -- EventHistory
-SA -- Reports
+SA -- GenerateReport
+SA -- ViewReports
 
 LO -- Maintenance
 LO -- TransferEquipment
@@ -83,8 +83,9 @@ FP -- TaskDetails
 FP -- EquipmentMalfunction
 FCM -- ShiftReadiness
 
-' ===== Association: secondary actor (right) =====
+' ===== Non-human actors (right): UC written first so the actor is placed right of the boundary =====
 CloseEvent -- NCSS
+GenerateReport -- SCHED
 
 ' ===== Include (base ..> included) =====
 CancelEvent ..> ReleaseResources : <<include>>
@@ -93,7 +94,7 @@ TaskCompletion ..> ReleaseResources : <<include>>
 
 ' ===== Extend (extension ..> base) =====
 CancelDependents ..> CancelTask : <<extend>>
-note bottom of CancelDependents
+note right of CancelDependents
   Condition: {task has dependent
   tasks that are not final}
   extension point: after task selection
