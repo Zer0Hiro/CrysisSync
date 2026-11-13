@@ -1,0 +1,150 @@
+@startuml
+'skinparam actorStyle awesome
+left to right direction
+title CrisisSync
+
+' ===== Actors =====
+actor "//User//" as USER <<abstract>>
+actor "System Administrator" as SA
+actor "Logistics & Resources Officer" as LO
+actor "Dispatcher" as D
+actor "//Field Personnel//" as FP <<abstract>>
+actor "Field Commander" as FC
+actor "Field Crew Member" as FCM
+actor "National Clearing & Settlement System" as NCSS
+actor "Scheduler" as SCHED
+
+' ===== Actor generalization (parent <|-- child: arrow still points to parent; parent is laid out to the left) =====
+USER <|-- SA
+USER <|-- LO
+USER <|-- D
+USER <|-- FP
+FP <|-- FC
+FP <|-- FCM
+
+' ===== System boundary =====
+rectangle "CrisisSync" {
+  usecase Login as "Log In
+--
+extension points:
+credential validation"
+  usecase "Reject Invalid Login" as RejectLogin
+
+  ' --- Administration ---
+  usecase "Manage User Accounts & Permissions" as ManageUsers
+  usecase "Load Initial Data" as LoadData
+  usecase "View Event History" as EventHistory
+  usecase "Generate Report" as GenerateReport
+  usecase "Produce SLA Compliance Report" as SLAReport
+  usecase "Produce Resource Utilization Report" as UtilizationReport
+  usecase "View Reports" as ViewReports
+
+  ' --- Resource Management ---
+  usecase "Update Equipment Maintenance Status" as Maintenance
+  usecase "Transfer Equipment Between Stations" as TransferEquipment
+  usecase "Update Crew Member Exceptional Availability" as ExceptionalAvailability
+
+  ' --- Event & Task Management ---
+  usecase "Open Event" as OpenEvent
+  usecase "Cancel Event" as CancelEvent
+  usecase ManageTaskTree as "Manage Task Tree
+--
+extension points:
+dependency change"
+  usecase "Reject Cyclic Dependency" as RejectCycle
+  usecase ReserveResources as "Reserve Resources for Task
+--
+extension points:
+resource selection
+transaction commit"
+  usecase AutoAllocation as "Request Automatic Allocation
+--
+extension points:
+resource conflict"
+  usecase "Retry with Alternative Resource" as RetryAlternative
+  usecase "Reject Unavailable Reservation" as RejectReservation
+  usecase "Allocate Replacement Equipment" as ReplaceEquipment
+  usecase CancelTask as "Cancel Task
+--
+extension points:
+after task selection"
+  usecase "Cancel Dependent Tasks" as CancelDependents
+  usecase "Release Task Resources" as ReleaseResources
+  usecase "View Event Status Screen" as EventStatus
+  usecase CloseEvent as "Close Event & Settle Costs
+--
+extension points:
+settlement response"
+  usecase "Calculate Operating Costs" as CalculateCosts
+  usecase "Handle Settlement Rejection" as SettlementRejection
+
+  ' --- Field Operations ---
+  usecase "Report Task Completion" as TaskCompletion
+  usecase "View Task Details" as TaskDetails
+  usecase "Report Equipment Malfunction" as EquipmentMalfunction
+  usecase "Report Shift Start & Readiness" as ShiftReadiness
+}
+
+' ===== Associations: primary actors (left) =====
+USER -- Login
+
+SA -- ManageUsers
+SA -- LoadData
+SA -- EventHistory
+SA -- GenerateReport
+SA -- ViewReports
+
+LO -- Maintenance
+LO -- TransferEquipment
+LO -- ExceptionalAvailability
+
+D -- OpenEvent
+D -- CancelEvent
+D -- ManageTaskTree
+D -- ReserveResources
+D -- ReplaceEquipment
+D -- CancelTask
+D -- EventStatus
+D -- CloseEvent
+
+FC -- EventStatus
+FC -- TaskCompletion
+FP -- TaskDetails
+FP -- EquipmentMalfunction
+FCM -- ShiftReadiness
+
+' ===== Non-human actors (right): UC written first so the actor is placed right of the boundary =====
+CloseEvent -- NCSS
+GenerateReport -- SCHED
+
+' ===== Include (base ..> included) =====
+CancelEvent ..> ReleaseResources : <<include>>
+CancelTask ..> ReleaseResources : <<include>>
+TaskCompletion ..> ReleaseResources : <<include>>
+GenerateReport ..> SLAReport : <<include>>
+GenerateReport ..> UtilizationReport : <<include>>
+CloseEvent ..> CalculateCosts : <<include>>
+
+' ===== Extend (extension ..> base) =====
+RejectLogin ..> Login : <<extend>>
+RejectCycle ..> ManageTaskTree : <<extend>>
+AutoAllocation ..> ReserveResources : <<extend>>
+RetryAlternative ..> AutoAllocation : <<extend>>
+RejectReservation ..> ReserveResources : <<extend>>
+CancelDependents ..> CancelTask : <<extend>>
+SettlementRejection ..> CloseEvent : <<extend>>
+
+' ===== Extend conditions (extension point: condition) =====
+' Reject Invalid Login         -> credential validation: {username or password is wrong}
+' Reject Cyclic Dependency     -> dependency change: {new dependency would create a cycle}
+' Request Automatic Allocation -> resource selection: {Dispatcher chooses automatic allocation}
+' Retry with Alt. Resource     -> resource conflict: {chosen resource taken concurrently; max 2 retries}
+' Reject Unavailable Reserv.   -> transaction commit: {a requested resource is not available; rollback}
+' Handle Settlement Rejection  -> settlement response: {external system rejects the settlement}
+note right of CancelDependents
+  Condition: {task has dependent
+  tasks that are not final}
+  extension point: after task selection
+end note
+
+@enduml
