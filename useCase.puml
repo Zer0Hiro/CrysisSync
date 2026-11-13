@@ -1,0 +1,73 @@
+@startuml
+skinparam packageStyle rectangle
+'skinparam actorStyle awesome
+left to right direction
+title CrisisSync
+
+actor "User" as USER <<abstract>>
+actor "System Administrator" as SA
+actor "Logistics & Resources Officer" as LO
+actor "Dispatcher" as D
+actor "Field Personnel" as FP <<abstract>>
+actor "Field Commander" as FC
+actor "Field Crew Member" as FCM
+actor "National Clearing & Settlement System" as NCSS
+
+SA --|> USER
+LO --|> USER
+D --|> USER
+FP --|> USER
+FC --|> FP
+FCM --|> FP
+
+rectangle "CrisisSync" {
+  usecase "Manage User Accounts & Permissions" as ManageUsers
+  usecase "Load Initial Data" as LoadData
+  usecase "View Event History" as EventHistory
+  usecase "Generate & View Reports" as Reports
+
+  usecase "Update Equipment Maintenance Status" as Maintenance
+  usecase "Transfer Equipment Between Stations" as TransferEquipment
+  usecase "Update Crew Member Exceptional Availability" as ExceptionalAvailability
+
+  usecase "Open Event" as OpenEvent
+  usecase "Cancel Event" as CancelEvent
+  usecase "Manage Task Tree" as ManageTaskTree
+  usecase "Reserve Resources for Task" as ReserveResources
+  usecase "Cancel Task" as CancelTask
+  usecase "View Event Status Screen" as EventStatus
+  usecase "Close Event & Settle Costs" as CloseEvent
+
+  usecase "Report Task Completion" as TaskCompletion
+  usecase "View Task Details" as TaskDetails
+  usecase "Report Equipment Malfunction" as EquipmentMalfunction
+  usecase "Report Shift Start & Readiness" as ShiftReadiness
+}
+
+SA -- ManageUsers
+SA -- LoadData
+SA -- EventHistory
+SA -- Reports
+
+LO -- Maintenance
+LO -- TransferEquipment
+LO -- ExceptionalAvailability
+
+D -- OpenEvent
+D -- CancelEvent
+D -- ManageTaskTree
+D -- ReserveResources
+D -- CancelTask
+D -- EventStatus
+D -- CloseEvent
+
+FC -- EventStatus
+FC -- TaskCompletion
+FP -- TaskDetails
+FP -- EquipmentMalfunction
+FCM -- ShiftReadiness
+
+NCSS -- CloseEvent
+
+
+@enduml
