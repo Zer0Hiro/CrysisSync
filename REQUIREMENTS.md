@@ -10,11 +10,11 @@
 |:-----------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------:|:---------------:|:----------------:|
 | **REQ-01** | The System shall transition a task to an Active state only once a Dispatcher booked all required resources in a single transaction.                             |      FR       |      `TBD`      | TEST-01, TEST-02 |
 | **REQ-02** | In the event of a failure to reserve a resource for a task, the System shall roll back the entire allocation transaction and keep the task in the Ready state.  |      FR       |      `TBD`      | TEST-03, TEST-04 |
-| **REQ-03** | The System shall not require the Dispatcher to perform more than 3 clicks to successfully book a complete resource package for a Ready task.                    |      NFR      |      `TBD`      | TEST-05, TEST-06 |
+| **REQ-03** | The System shall not require the Dispatcher to perform more than 3 clicks to successfully book a complete resource package for a Ready task.                    |      NFR      |      `TBD`      | N/A |
 | **REQ-04** | The System shall execute the resource allocation database transaction and return a success or failure response to the Dispatcher within 1.5 seconds.            |      NFR      |      `TBD`      | N/A |
 | **REQ-05** | Upon receiving a task completion report, the System shall push the updated status to all active relevant event status screens within 500 milliseconds.          |      NFR      |      `TBD`      | N/A |
 | **REQ-06** | The System shall allow only the Field Commander assigned to a task to report its completion.                                                                    |      FR       |      `TBD`      | N/A |
-| **REQ-07** | The System shall automatically generate an SLA report for the month that ended, at the end of each calendar month.                                              |      FR       |      `TBD`      | N/A |
+| **REQ-07** | The System shall automatically generate an SLA report for the month that ended, at the end of each calendar month.                                              |      FR       |      `TBD`      | TEST-05, TEST-06 |
 
 <!-- TODO: Figure if this is relevant. -->
 [//]: # (| **REQ-08** | If the server is unavailable at the end of a calendar month, the System shall generate the missing SLA report within 5 minutes after the server starts again. |      FR       |      `TBD`      | N/A |)
