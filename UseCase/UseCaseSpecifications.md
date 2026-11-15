@@ -1,8 +1,8 @@
 # CrisisSync - Use Case Specifications
 
-Specifications for the 32 use cases in `useCase.puml`.
-**Main use cases** (UC-01 to UC-14) are the central use cases; their specifications are entered in Visual Paradigm 18.1.
-**Other use cases** (UC-15 to UC-32) are kept here for completeness.
+Specifications for the 33 use cases in the Visual Paradigm model (`G11_Assignment1.vpp`).
+**Main use cases** (UC-01 to UC-15) are the central use cases; their specifications are entered in Visual Paradigm 18.1.
+**Other use cases** (UC-16 to UC-33) are kept here for completeness.
 Main flows are numbered actor-system interactions. Extensions branch from a numbered main-flow step (`4a` = alternative at step 4).
 "Logged in" means the actor completed **Log In** and holds the role named.
 
@@ -47,28 +47,45 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-03 Manage Task Tree
+## UC-03 Create Task
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the event is open.
-- **Success end condition:** The task and its dependencies are saved, the task graph has no cycle, and each task is Blocked or Ready according to its prerequisites.
-- **Failure end condition:** The task tree is unchanged.
+- **Success end condition:** A new task is saved with its name, estimated duration, prerequisite tasks and resource package (exactly one Field Commander), its state is Blocked or Ready, and the status screens show it.
+- **Failure end condition:** No task is created.
 
 **Main flow:**
-1. The Dispatcher opens the event's task tree.
-2. The Dispatcher adds a task with name, estimated duration, prerequisite tasks and the required resource package (exactly one Field Commander).
-3. The system validates the package and checks the dependency graph for cycles.
+1. The Dispatcher selects the open event and chooses to create a task.
+2. The Dispatcher enters the name, the estimated duration, the prerequisite tasks and the required resource package.
+3. The system validates that the package contains exactly one Field Commander.
 4. The system saves the task as Blocked if a prerequisite is open, or Ready if none is open.
 5. The system pushes the updated task tree to the status screens.
 
 **Extensions:**
-- 2a. The Dispatcher changes the prerequisites of a task that is not Blocked: the system refuses because its dependencies are locked; the flow returns to step 2.
-- 3a. The new or changed dependency creates a cycle: **Reject Cyclic Dependency** (extension point: dependency change).
-- 3b. The package does not contain exactly one Field Commander: the system shows an error and the flow returns to step 2.
-- 4a. After a dependency change a Blocked task has no open prerequisite: the system sets it to Ready.
+- 3a. The package does not contain exactly one Field Commander: the system shows an error and the flow returns to step 2.
 
 ---
 
-## UC-04 Reserve Resources for Task
+## UC-04 Manage Task Tree
+- **Actors:** Dispatcher
+- **Preconditions:** The Dispatcher is logged in, the event is open and the event has tasks.
+- **Success end condition:** The task's new prerequisites are saved, the task graph has no cycle, and the task is Blocked or Ready according to its prerequisites.
+- **Failure end condition:** The task tree is unchanged.
+
+**Main flow:**
+1. The Dispatcher opens the event's task tree.
+2. The Dispatcher selects a Blocked task and adds or changes its prerequisite tasks.
+3. The system checks the dependency graph for cycles.
+4. The system saves the new dependencies.
+5. The system sets the task to Ready if no prerequisite is open; otherwise the task stays Blocked.
+6. The system pushes the updated task tree to the status screens.
+
+**Extensions:**
+- 2a. The selected task is not Blocked: the system refuses because its dependencies are locked; the flow returns to step 2.
+- 3a. The new or changed dependency creates a cycle: **Reject Cyclic Dependency** (extension point: dependency change).
+
+---
+
+## UC-05 Reserve Resources for Task
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the task is Ready.
 - **Success end condition:** Every resource of the task's package is Reserved in one transaction, the task is Active and all screens show the change.
@@ -90,7 +107,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-05 Request Automatic Allocation
+## UC-06 Request Automatic Allocation
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the task is Ready.
 - **Success end condition:** The package is chosen by the selected criterion and reserved in one transaction, and the task is Active.
@@ -109,7 +126,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-06 View Event Status Screen
+## UC-07 View Event Status Screen
 - **Actors:** Dispatcher, Field Commander
 - **Preconditions:** The actor is logged in. Field Commander: commands at least one task of the event.
 - **Success end condition:** The live status screen is displayed and stays up to date by server push.
@@ -127,7 +144,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-07 Report Task Completion
+## UC-08 Report Task Completion
 - **Actors:** Field Commander
 - **Preconditions:** The Field Commander is logged in, commands the task, and the task is Active.
 - **Success end condition:** The task is Completed, its resources are Available, dependent tasks whose prerequisites are all completed are Ready, and all screens show the change.
@@ -148,7 +165,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-08 Cancel Task
+## UC-09 Cancel Task
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the task is not in a final state.
 - **Success end condition:** The task is Cancelled and its resources are Available.
@@ -166,7 +183,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-09 Cancel Event
+## UC-10 Cancel Event
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the event is open.
 - **Success end condition:** The event is Cancelled with an automatically recorded cancellation time, all its non-final tasks are Cancelled and their resources are Available.
@@ -185,7 +202,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-10 Report Equipment Malfunction
+## UC-11 Report Equipment Malfunction
 - **Actors:** Field Personnel (Field Commander, Field Crew Member)
 - **Preconditions:** The actor is logged in and is assigned to an active task that uses the item.
 - **Success end condition:** The item is Faulty/In repair immediately and the Dispatcher is alerted to allocate a replacement.
@@ -203,7 +220,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-11 Allocate Replacement Equipment
+## UC-12 Allocate Replacement Equipment
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in. An equipment item reserved for an active task was marked faulty.
 - **Success end condition:** An available item of the same type is reserved for the task and the task stays Active.
@@ -222,7 +239,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-12 Close Event & Settle Costs
+## UC-13 Close Event & Settle Costs
 - **Actors:** Dispatcher, National Clearing & Settlement System
 - **Preconditions:** The Dispatcher is logged in, the event is open and all its tasks are Completed or Cancelled.
 - **Success end condition:** The settlement approval and transaction token are stored, and the event is Closed with an automatically recorded closing time.
@@ -243,7 +260,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-13 Generate Report
+## UC-14 Generate Report
 - **Actors:** Scheduler (primary, monthly), System Administrator (on demand)
 - **Preconditions:** Scheduler: the system clock reached the end of a month. System Administrator: logged in.
 - **Success end condition:** The Resource Utilization Report and the SLA Compliance Report for the month are stored and can be viewed.
@@ -262,7 +279,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-14 Produce SLA Compliance Report
+## UC-15 Produce SLA Compliance Report
 - **Actors:** Scheduler, System Administrator (through Generate Report)
 - **Preconditions:** Generate Report determined the reporting month.
 - **Success end condition:** An SLA report is produced with the average time from event opening to closure of its last task, for each event type.
@@ -282,7 +299,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-15 Reject Invalid Login
+## UC-16 Reject Invalid Login
 - **Actors:** User
 - **Preconditions:** The user submitted a username and password that do not match an active account.
 - **Success end condition:** The login is refused, no session is opened, and the user can try again.
@@ -299,7 +316,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-16 Manage User Accounts & Permissions
+## UC-17 Manage User Accounts & Permissions
 - **Actors:** System Administrator
 - **Preconditions:** The System Administrator is logged in.
 - **Success end condition:** The account is created, updated or deactivated with its role and permissions saved, and the change is recorded in the audit log.
@@ -321,7 +338,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-17 Load Initial Data
+## UC-18 Load Initial Data
 - **Actors:** System Administrator
 - **Preconditions:** The System Administrator is logged in. A data file (SQL script, JSON or CSV) with users, crew members and equipment items is available.
 - **Success end condition:** All records of the file are stored in the database and a load summary is displayed.
@@ -340,7 +357,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-18 View Event History
+## UC-19 View Event History
 - **Actors:** System Administrator
 - **Preconditions:** The System Administrator is logged in.
 - **Success end condition:** The System Administrator has viewed the requested events. The history is unchanged (read-only).
@@ -360,7 +377,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-19 Produce Resource Utilization Report
+## UC-20 Produce Resource Utilization Report
 - **Actors:** Scheduler, System Administrator (through Generate Report)
 - **Preconditions:** Generate Report determined the reporting month.
 - **Success end condition:** A utilization report is produced with the percentage of the month each resource was reserved, by equipment type and by crew role, in graphical form.
@@ -377,7 +394,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-20 View Reports
+## UC-21 View Reports
 - **Actors:** System Administrator
 - **Preconditions:** The System Administrator is logged in.
 - **Success end condition:** The selected report is displayed.
@@ -394,7 +411,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-21 Update Equipment Maintenance Status
+## UC-22 Update Equipment Maintenance Status
 - **Actors:** Logistics & Resources Officer
 - **Preconditions:** The Logistics & Resources Officer is logged in.
 - **Success end condition:** The item's status is Faulty/In repair or Available, the change is in the audit log and all relevant screens show it.
@@ -414,7 +431,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-22 Transfer Equipment Between Stations
+## UC-23 Transfer Equipment Between Stations
 - **Actors:** Logistics & Resources Officer
 - **Preconditions:** The Logistics & Resources Officer is logged in.
 - **Success end condition:** The item's current location is the destination station and the change is in the audit log.
@@ -433,7 +450,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-23 Update Crew Member Exceptional Availability
+## UC-24 Update Crew Member Exceptional Availability
 - **Actors:** Logistics & Resources Officer
 - **Preconditions:** The Logistics & Resources Officer is logged in.
 - **Success end condition:** The crew member is Unavailable for the given reason and period, or Available again, and the change is in the audit log.
@@ -450,7 +467,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-24 Reject Cyclic Dependency
+## UC-25 Reject Cyclic Dependency
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher added or changed a dependency that would create a cycle.
 - **Success end condition:** The change is rejected, the task tree is unchanged and the Dispatcher knows which tasks form the cycle.
@@ -467,7 +484,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-25 Reject Unavailable Reservation
+## UC-26 Reject Unavailable Reservation
 - **Actors:** Dispatcher
 - **Preconditions:** At commit time at least one selected resource is not available (for example, another Dispatcher reserved it at the same moment).
 - **Success end condition:** The whole transaction is rolled back, no resource is reserved, the task is Ready and the Dispatcher sees a clear message and the current state.
@@ -486,7 +503,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-26 Retry with Alternative Resource
+## UC-27 Retry with Alternative Resource
 - **Actors:** Dispatcher
 - **Preconditions:** A resource chosen by automatic allocation was taken by a concurrent allocation.
 - **Success end condition:** The next-best available alternative is reserved without the Dispatcher repeating the request, after at most 2 alternative attempts, and the task is Active.
@@ -504,7 +521,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-27 Cancel Dependent Tasks
+## UC-28 Cancel Dependent Tasks
 - **Actors:** Dispatcher
 - **Preconditions:** The task selected for cancellation has direct or indirect dependent tasks that are not final.
 - **Success end condition:** After the Dispatcher's confirmation, the task and all its non-final dependent tasks are Cancelled and their resources are Available.
@@ -521,7 +538,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-28 Release Task Resources
+## UC-29 Release Task Resources
 - **Actors:** Dispatcher, Field Commander (through Cancel Event, Cancel Task, Report Task Completion)
 - **Preconditions:** The task was completed or cancelled.
 - **Success end condition:** Every resource reserved for the task is Available again (faulty items stay Faulty/In repair) and the release time is recorded.
@@ -538,7 +555,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-29 Calculate Operating Costs
+## UC-30 Calculate Operating Costs
 - **Actors:** Dispatcher (through Close Event & Settle Costs)
 - **Preconditions:** All tasks of the event are in a final state.
 - **Success end condition:** The total operating cost and its breakdown are computed.
@@ -555,7 +572,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-30 Handle Settlement Rejection
+## UC-31 Handle Settlement Rejection
 - **Actors:** Dispatcher, National Clearing & Settlement System
 - **Preconditions:** The National Clearing & Settlement System rejected the settlement request.
 - **Success end condition:** The event stays open, the rejection is recorded and the Dispatcher is alerted with the reason.
@@ -572,7 +589,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-31 View Task Details
+## UC-32 View Task Details
 - **Actors:** Field Personnel (Field Commander, Field Crew Member)
 - **Preconditions:** The actor is logged in and is assigned to a task.
 - **Success end condition:** The details of the actor's task are displayed.
@@ -587,7 +604,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-32 Report Shift Start & Readiness
+## UC-33 Report Shift Start & Readiness
 - **Actors:** Field Crew Member
 - **Preconditions:** The Field Crew Member is logged in.
 - **Success end condition:** The shift start time is recorded and the member's status is Available or Unavailable as reported.
