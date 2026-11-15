@@ -46,6 +46,7 @@ credential validation"
 
   ' --- Event & Task Management ---
   usecase "Open Event" as OpenEvent
+  usecase "Create Task" as CreateTask
   usecase "Cancel Event" as CancelEvent
   usecase ManageTaskTree as "Manage Task Tree
 --
@@ -99,6 +100,7 @@ LO -- TransferEquipment
 LO -- ExceptionalAvailability
 
 D -- OpenEvent
+D -- CreateTask
 D -- CancelEvent
 D -- ManageTaskTree
 D -- ReserveResources

@@ -33,6 +33,7 @@ flowchart LR
     ExceptionalAvailability(["Update Crew Member Exceptional Availability"])
 
     OpenEvent(["Open Event"])
+    CreateTask(["Create Task"])
     CancelEvent(["Cancel Event"])
     ManageTaskTree(["Manage Task Tree"])
     RejectCycle(["Reject Cyclic Dependency"])
@@ -83,6 +84,7 @@ flowchart LR
   LO --- ExceptionalAvailability
 
   D --- OpenEvent
+  D --- CreateTask
   D --- CancelEvent
   D --- ManageTaskTree
   D --- ReserveResources
