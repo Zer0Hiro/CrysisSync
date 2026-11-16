@@ -85,44 +85,43 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-05 Reserve Resources for Task
+## UC-05 Reserve Resources for Task (Manual)
 - **Actors:** Dispatcher
-- **Preconditions:** The Dispatcher is logged in and the task is Ready.
-- **Success end condition:** Every resource of the task's package is Reserved in one transaction, the task is Active and all screens show the change.
-- **Failure end condition:** No resource is reserved and the task stays Ready.
+- **Preconditions:** The Dispatcher is logged in and the task is in the Ready state.
+- **Success end condition:** All resources of the package are reserved together in a single transaction, the task transitions to Active, and all screens reflect the change within performance thresholds (REQ-01, REQ-13, REQ-14).
+- **Failure end condition:** No resources are reserved, the transaction rolls back, and the task remains Ready.
 
 **Main flow:**
 1. The Dispatcher selects a Ready task on the event status screen.
-2. The system shows the required package and the available resources for each package item.
-3. The Dispatcher selects a resource for each package item.
-4. The Dispatcher confirms the reservation.
-5. In one database transaction the system locks the selected resource records, checks that all are available and sets them to Reserved.
-6. The system sets the task to Active, records it in the audit log and pushes the change.
+2. The system displays the required resource package and available resources within a maximum of 3 clicks (REQ-13).
+3. The Dispatcher selects the required resources and confirms the reservation.
+4. In a single database transaction, the system locks the selected resource records, verifies availability, and marks them as Reserved (REQ-01, REQ-14).
+5. The system sets the task to Active, logs the action in the audit log, and pushes the status update.
 
 **Extensions:**
-- 1a. The task is not Ready: the system does not offer reservation; the use case ends.
+- 1a. The task is not Ready: the system does not offer reservation; use case ends.
 - 3a. The Dispatcher chooses automatic allocation: **Request Automatic Allocation** (extension point: resource selection).
 - 3b. A Field Commander already reserved for another task is shown as unavailable and cannot be selected.
-- 5a. A selected resource is no longer available: **Reject Unavailable Reservation** (extension point: transaction commit).
+- 4a. A selected resource becomes unavailable at commit time: **Reject Unavailable Reservation** (extension point: transaction commit).
 
 ---
 
 ## UC-06 Request Automatic Allocation
 - **Actors:** Dispatcher
-- **Preconditions:** The Dispatcher is logged in and the task is Ready.
-- **Success end condition:** The package is chosen by the selected criterion and reserved in one transaction, and the task is Active.
-- **Failure end condition:** No resource is reserved, the task stays Ready and the Dispatcher is notified.
+- **Preconditions:** The Dispatcher is logged in and the task is in the Ready state.
+- **Success end condition:** The resource package is automatically selected according to the chosen criterion, reserved in a single transaction, and the task becomes Active (REQ-04, REQ-05).
+- **Failure end condition:** Allocation fails after permitted retries, the task stays Ready, and the Dispatcher is notified.
 
 **Main flow:**
-1. The Dispatcher chooses automatic allocation.
-2. The Dispatcher selects a criterion (for example, the nearest available resources to the event location).
-3. The system selects the best available resource for each package item by that criterion.
-4. The system reserves the package in one transaction.
-5. The system sets the task to Active and shows the allocated resources.
+1. The Dispatcher chooses automatic allocation for a Ready task (REQ-04).
+2. The Dispatcher selects an allocation criterion (e.g., geographic proximity to the event).
+3. The system selects the best available resource for each package item based on the criterion (REQ-05).
+4. The system attempts to reserve the package in a single transaction.
+5. Upon success, the system sets the task to Active and displays the allocated resources.
 
 **Extensions:**
-- 3a. A package item has no available resource: the allocation fails, the Dispatcher is notified and the task stays Ready.
-- 4a. A selected resource was taken by a concurrent allocation: **Retry with Alternative Resource** (extension point: resource conflict).
+- 3a. A package item has no available resource: allocation fails, Dispatcher is notified, task stays Ready.
+- 4a. A selected resource is taken by a concurrent transaction: **Retry with Alternative Resource** (extension point: resource conflict).
 
 ---
 
@@ -167,19 +166,19 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ## UC-09 Cancel Task
 - **Actors:** Dispatcher
-- **Preconditions:** The Dispatcher is logged in and the task is not in a final state (Completed or Cancelled).
-- **Success end condition:** The task is Cancelled, its cancellation time is recorded automatically, and its resources are Available.
-- **Failure end condition:** The task is unchanged.
+- **Preconditions:** The Dispatcher is logged in and the task is not in a final state.
+- **Success end condition:** The task is Cancelled, its resources are released, and dependent non-final tasks are handled.
+- **Failure end condition:** The task remains unchanged.
 
 **Main flow:**
-1. The Dispatcher selects the task on the event status screen.
-2. The Dispatcher chooses to cancel the task.
-3. The system cancels the task and releases its resources (**Release Task Resources**).
-4. The system records the cancellation time automatically, records the cancellation in the audit log and pushes the change.
+1. The Dispatcher selects a non-final task on the event status screen and initiates cancellation.
+2. The system checks for non-final dependent tasks.
+3. The system cancels the task, releases its resources (**Release Task Resources**), records the timestamp in the audit log, and pushes the update.
 
 **Extensions:**
-- 1a. The task is in a final state: the system does not offer cancellation.
-- 2a. The task has non-final dependent tasks: the system invokes **Cancel Dependent Tasks** and asks for confirmation before proceeding.
+- 1a. The task is in a final state: cancellation is not offered.
+- 2a. The task has non-final dependent tasks: invokes **Cancel Dependent Tasks** and requests confirmation before proceeding.
+
 ---
 
 ## UC-10 Cancel Event
@@ -502,21 +501,20 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ---
 
-## UC-27 Retry with Alternative Resource
+## UC-27 Retry with Alternative Resource (Automatic Allocation)
 - **Actors:** Dispatcher
-- **Preconditions:** A resource chosen by automatic allocation was taken by a concurrent allocation.
-- **Success end condition:** The next-best available alternative is reserved without the Dispatcher repeating the request, after at most 2 alternative attempts, and the task is Active.
-- **Failure end condition:** No resource is reserved, the task stays Ready and the Dispatcher is notified.
+- **Preconditions:** Selected resource taken in concurrent allocation (REQ-06, REQ-07, REQ-08).
+- **Success end condition:** Automatically cycles through up to 2 alternative resource attempts before succeeding or failing.
 
 **Main flow:**
 1. The system rolls back the failed attempt.
 2. The system selects the next-best available alternative for the conflicting item.
 3. The system tries the reservation again, without blocking the server for other users.
-4. The reservation succeeds and the flow returns to **Request Automatic Allocation** step 5.
+4. The reservation succeeds and flow returns to **Request Automatic Allocation** step 5.
 
 **Extensions:**
-- 3a. The reservation conflicts again and fewer than 2 alternatives were tried: the flow returns to step 2.
-- 3b. The second alternative also fails, or no alternative exists: the allocation fails, the Dispatcher is notified and the task stays Ready.
+- 3a. Reservation conflicts again and fewer than 2 alternatives tried: returns to step 2.
+- 3b. Second alternative fails or none exist: allocation fails, Dispatcher notified, task stays Ready.
 
 ---
 
