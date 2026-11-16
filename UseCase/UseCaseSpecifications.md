@@ -167,20 +167,19 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ## UC-09 Cancel Task
 - **Actors:** Dispatcher
-- **Preconditions:** The Dispatcher is logged in and the task is not in a final state.
-- **Success end condition:** The task is Cancelled and its resources are Available.
+- **Preconditions:** The Dispatcher is logged in and the task is not in a final state (Completed or Cancelled).
+- **Success end condition:** The task is Cancelled, its cancellation time is recorded automatically, and its resources are Available.
 - **Failure end condition:** The task is unchanged.
 
 **Main flow:**
 1. The Dispatcher selects the task on the event status screen.
 2. The Dispatcher chooses to cancel the task.
 3. The system cancels the task and releases its resources (**Release Task Resources**).
-4. The system records the cancellation in the audit log and pushes the change.
+4. The system records the cancellation time automatically, records the cancellation in the audit log and pushes the change.
 
 **Extensions:**
 - 1a. The task is in a final state: the system does not offer cancellation.
-- 2a. The task has dependent tasks that are not final: **Cancel Dependent Tasks** (extension point: after task selection).
-
+- 2a. The task has non-final dependent tasks: the system invokes **Cancel Dependent Tasks** and asks for confirmation before proceeding.
 ---
 
 ## UC-10 Cancel Event
@@ -195,7 +194,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 3. The system shows how many non-final tasks will be cancelled and asks for confirmation.
 4. The Dispatcher confirms.
 5. The system cancels every non-final task and releases its resources (**Release Task Resources**).
-6. The system marks the event Cancelled, records the cancellation time, records it in the audit log and pushes the change.
+6. The system marks the event Cancelled, records the cancellation time automatically, records it in the audit log and pushes the change.
 
 **Extensions:**
 <!-- not in project story: - 4a. The Dispatcher declines: nothing changes; the use case ends. -->
@@ -204,7 +203,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ## UC-11 Report Equipment Malfunction
 - **Actors:** Field Personnel (Field Commander, Field Crew Member)
-- **Preconditions:** The actor is logged in and is assigned to an active task that uses the item.
+- **Preconditions:** The actor is logged in and is assigned to an active task and the item is one of the task’s reserved equipment resources..
 - **Success end condition:** The item is Faulty/In repair immediately and the Dispatcher is alerted to allocate a replacement.
 - **Failure end condition:** The item's status is unchanged.
 
@@ -380,7 +379,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 ## UC-20 Produce Resource Utilization Report
 - **Actors:** Scheduler, System Administrator (through Generate Report)
 - **Preconditions:** Generate Report determined the reporting month.
-- **Success end condition:** A utilization report is produced with the percentage of the month each resource was reserved, by equipment type and by crew role, in graphical form.
+- **Success end condition:** A utilization report is produced with the percentage of the month each resource’s utilization, by equipment type and by crew role, in graphical form.
 - **Failure end condition:** No utilization report is produced and Generate Report fails at step 3.
 
 **Main flow:**
