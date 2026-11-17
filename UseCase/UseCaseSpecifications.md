@@ -50,12 +50,12 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 ## UC-03 Create Task
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the event is open.
-- **Success end condition:** A new task is saved with its name, estimated duration,resource package (exactly one Field Commander), its state is Blocked or Ready, and the status screens show it.
+- **Success end condition:** A new task is saved with its name, estimated duration and resource package (exactly one Field Commander), its state is Blocked or Ready, and the status screens show it.
 - **Failure end condition:** No task is created.
 
 **Main flow:**
 1. The Dispatcher selects the open event and chooses to create a task.
-2. The Dispatcher enters the name, the estimated duratio and the required resource package.
+2. The Dispatcher enters the name, the estimated duration and the required resource package.
 3. The system validates that the package contains exactly one Field Commander.
 4. The system saves the task as Blocked if a prerequisite is open, or Ready if none is open.
 5. The system pushes the updated task tree to the status screens.
@@ -202,7 +202,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ## UC-11 Report Equipment Malfunction
 - **Actors:** Field Personnel (Field Commander, Field Crew Member)
-- **Preconditions:** The actor is logged in and is assigned to an active task and the item is one of the task’s reserved equipment resources..
+- **Preconditions:** The actor is logged in and is assigned to an active task and the item is one of the task's reserved equipment resources.
 - **Success end condition:** The item is Faulty/In repair immediately and the Dispatcher is alerted to allocate a replacement.
 - **Failure end condition:** The item's status is unchanged.
 
