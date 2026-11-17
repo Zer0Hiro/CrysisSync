@@ -1,7 +1,13 @@
 # Requirements Architecture & System Specification
 **Course:** Software Engineering Methods  
 **System:** CrisisSync Emergency Management System
-**Group Number:** 11
+**Group Number:** 11 
+
+**Team Members:**
+- Dima Chybisov (dima.chybisov@e.braude.ac.il)
+- Itay Rosen (itay.rosen@e.braude.ac.il)
+- Jacob Fumm (jacob.fumm@e.braude.ac.il)
+- Tomer Pine (tomer.pine@e.braude.ac.il)
 
 Requirements and acceptance tests for the two operations defined in Assignment 1, Part B:
 1. **Reserving a resource package for a task (manually or by automatic allocation), including reporting the task's completion.**
