@@ -49,6 +49,7 @@ flowchart LR
     CloseEvent(["Close Event & Settle Costs"])
     CalculateCosts(["Calculate Operating Costs"])
     SettlementRejection(["Handle Settlement Rejection"])
+    RejectClosure(["Reject Event Closure"])
 
     TaskCompletion(["Report Task Completion"])
     TaskDetails(["View Task Details"])
@@ -116,5 +117,7 @@ flowchart LR
   AutoAllocation -. "«extend»" .-> ReserveResources
   RetryAlternative -. "«extend»" .-> AutoAllocation
   RejectReservation -. "«extend»" .-> ReserveResources
+  RejectReservation -. "«extend»" .-> ReplaceEquipment
   CancelDependents -. "«extend»" .-> CancelTask
   SettlementRejection -. "«extend»" .-> CloseEvent
+  RejectClosure -. "«extend»" .-> CloseEvent

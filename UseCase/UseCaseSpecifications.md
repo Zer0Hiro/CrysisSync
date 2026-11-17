@@ -1,8 +1,8 @@
 # CrisisSync - Use Case Specifications
 
-Specifications for the 33 use cases in the Visual Paradigm model (`G11_Assignment1.vpp`).
+Specifications for the 34 use cases in the Visual Paradigm model (`G11_Assignment1.vpp`).
 **Main use cases** (UC-01 to UC-15) are the central use cases; their specifications are entered in Visual Paradigm 18.1.
-**Other use cases** (UC-16 to UC-33) are kept here for completeness.
+**Other use cases** (UC-16 to UC-34) are kept here for completeness.
 Main flows are numbered actor-system interactions. Extensions branch from a numbered main-flow step (`4a` = alternative at step 4).
 "Logged in" means the actor completed **Log In** and holds the role named.
 
@@ -233,13 +233,13 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 **Extensions:**
 <!-- not in project story: - 3a. No item of that type is available: the system informs the Dispatcher and flags the task as missing equipment. -->
-- 5a. The item was reserved concurrently: the system rolls back, shows a message and the flow returns to step 3.
+- 5a. The item was reserved concurrently: **Reject Unavailable Reservation** (extension point: Reject Unavailable Reservation).
 
 ---
 
 ## UC-13 Close Event & Settle Costs
 - **Actors:** Dispatcher, National Clearing & Settlement System
-- **Preconditions:** The Dispatcher is logged in, the event is open and all its tasks are Completed or Cancelled.
+- **Preconditions:** The Dispatcher is logged in and the event is open.
 - **Success end condition:** The settlement approval and transaction token are stored, and the event is Closed with an automatically recorded closing time.
 - **Failure end condition:** The event stays open and the Dispatcher is alerted.
 
@@ -252,7 +252,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 6. The system stores the approval and the token, closes the event, records the closing time and records it in the audit log.
 
 **Extensions:**
-- 2a. A task is not in a final state: the system refuses to close and lists the open tasks.
+- 2a. A task is not in a final state: **Reject Event Closure** (extension point: task state verification).
 - 5a. The National Clearing & Settlement System rejects the settlement: **Handle Settlement Rejection** (extension point: settlement response).
 <!-- not in project story: - 5b. No response arrives within the timeout: the event stays open and the Dispatcher is alerted to try again. -->
 
@@ -484,17 +484,17 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 ## UC-26 Reject Unavailable Reservation
 - **Actors:** Dispatcher
-- **Preconditions:** At commit time at least one selected resource is not available (for example, another Dispatcher reserved it at the same moment).
-- **Success end condition:** The whole transaction is rolled back, no resource is reserved, the task is Ready and the Dispatcher sees a clear message and the current state.
-- **Failure end condition:** No resource is reserved and the task is Ready.
+- **Preconditions:** At commit time of a reservation (**Reserve Resources for Task** or **Allocate Replacement Equipment**) at least one selected resource is not available (for example, another Dispatcher reserved it at the same moment).
+- **Success end condition:** The whole transaction is rolled back, no resource is reserved, the task keeps its state (Ready for a package reservation, Active for a replacement) and the Dispatcher sees a clear message and the current state.
+- **Failure end condition:** No resource is reserved and the task keeps its state.
 
 **Main flow:**
 1. The system detects the unavailable resource.
 2. The system rolls back the entire reservation transaction.
-3. The system keeps the task Ready.
+3. The system keeps the task in its current state (Ready, or Active when reserving a replacement).
 4. The system tells the Dispatcher which resource was unavailable.
 5. The system refreshes the Dispatcher's screen to the current state.
-6. The Dispatcher selects other resources (**Reserve Resources for Task** step 3).
+6. The Dispatcher selects other resources (**Reserve Resources for Task** step 3, or **Allocate Replacement Equipment** step 3).
 
 **Extensions:**
 <!-- not in project story: - 6a. The Dispatcher stops: the use case ends with the task Ready. -->
@@ -615,3 +615,21 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 
 **Extensions:**
 <!-- not in project story: - 3a. The member is currently reserved for a task: the system keeps the status Reserved and stores the readiness for when the reservation ends. -->
+
+---
+
+## UC-34 Reject Event Closure
+- **Actors:** Dispatcher
+- **Preconditions:** The Dispatcher chose to close an event that has at least one task that is not Completed or Cancelled.
+- **Success end condition:** The closing is refused, the event stays open and unchanged, no settlement request is sent, and the Dispatcher sees which tasks are still open.
+- **Failure end condition:** The event is closed, or a settlement request is sent, while it has tasks that are not in a final state.
+
+**Main flow:**
+1. The system detects that at least one task of the event is not in a final state.
+2. The system refuses to close the event; it does not calculate costs or send a settlement request.
+3. The system keeps the event open.
+4. The system displays the tasks that are not in a final state, with their current states.
+5. The Dispatcher returns to the event status screen (**View Event Status Screen**) to complete or cancel the open tasks.
+
+**Extensions:**
+- 5a. All tasks of the event later reach a final state and the Dispatcher tries to close the event again: **Close Event & Settle Costs** starts again.
