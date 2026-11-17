@@ -50,12 +50,12 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 ## UC-03 Create Task
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the event is open.
-- **Success end condition:** A new task is saved with its name, estimated duration, prerequisite tasks and resource package (exactly one Field Commander), its state is Blocked or Ready, and the status screens show it.
+- **Success end condition:** A new task is saved with its name, estimated duration,resource package (exactly one Field Commander), its state is Blocked or Ready, and the status screens show it.
 - **Failure end condition:** No task is created.
 
 **Main flow:**
 1. The Dispatcher selects the open event and chooses to create a task.
-2. The Dispatcher enters the name, the estimated duration, the prerequisite tasks and the required resource package.
+2. The Dispatcher enters the name, the estimated duratio and the required resource package.
 3. The system validates that the package contains exactly one Field Commander.
 4. The system saves the task as Blocked if a prerequisite is open, or Ready if none is open.
 5. The system pushes the updated task tree to the status screens.
@@ -168,7 +168,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the task is not in a final state.
 - **Success end condition:** The task is Cancelled, its resources are released, and dependent non-final tasks are handled.
-- **Failure end condition:** The task remains unchanged.
+- **Failure end condition:** The task remains unchanged or it's resources are not released.
 
 **Main flow:**
 1. The Dispatcher selects a non-final task on the event status screen and initiates cancellation.
@@ -185,7 +185,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher is logged in and the event is open.
 - **Success end condition:** The event is Cancelled with an automatically recorded cancellation time, all its non-final tasks are Cancelled and their resources are Available.
-- **Failure end condition:** The event and its tasks are unchanged.
+- **Failure end condition:** The event and its tasks are unchanged and their resources are not released.
 
 **Main flow:**
 1. The Dispatcher selects the open event on its status screen.
@@ -301,7 +301,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 - **Actors:** User
 - **Preconditions:** The user submitted a username and password that do not match an active account.
 - **Success end condition:** The login is refused, no session is opened, and the user can try again.
-- **Failure end condition:** No session is opened and the user remains on the login screen.
+- **Failure end condition:** No session is opened and the user remains on the login screen, or a session is opened and the login is accepted.
 
 **Main flow:**
 1. The system detects that the username or password is wrong.
@@ -469,7 +469,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 - **Actors:** Dispatcher
 - **Preconditions:** The Dispatcher added or changed a dependency that would create a cycle.
 - **Success end condition:** The change is rejected, the task tree is unchanged and the Dispatcher knows which tasks form the cycle.
-- **Failure end condition:** The task tree is unchanged.
+- **Failure end condition:** The task tree has a cycle.
 
 **Main flow:**
 1. The system detects the cycle in the dependency graph.
@@ -522,7 +522,7 @@ Main flows are numbered actor-system interactions. Extensions branch from a numb
 - **Actors:** Dispatcher
 - **Preconditions:** The task selected for cancellation has direct or indirect dependent tasks that are not final.
 - **Success end condition:** After the Dispatcher's confirmation, the task and all its non-final dependent tasks are Cancelled and their resources are Available.
-- **Failure end condition:** No task is cancelled.
+- **Failure end condition:** Not all tasks dependent are cancelled.
 
 **Main flow:**
 1. The system finds all direct and indirect dependent tasks that are not final.
