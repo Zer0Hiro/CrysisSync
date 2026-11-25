@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Configure the CrysisSync Linear workspace: team CS, 2-week cycles, "In Review" state, Area labels.
+# Configure the CrysisSync Linear workspace: team CS, weekly cycles (Fri-Thu), "In Review" state, Area labels.
 # Idempotent: re-running only changes what is missing. Needs curl + jq and LINEAR_API_KEY in <repo>/.env.
 set -euo pipefail
 
@@ -7,8 +7,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 
 TEAM_NAME="CrysisSync"
 TEAM_KEY="CS"
-CYCLE_WEEKS=2
-CYCLE_START_DAY=0          # 0 = Sunday
+CYCLE_WEEKS=1
+CYCLE_START_DAY=5          # 5 = Friday (course sprints run Fri-Thu)
 AUTO_ARCHIVE_MONTHS=1
 REVIEW_STATE="In Review"
 LABEL_GROUP="Area"
