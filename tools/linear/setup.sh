@@ -9,7 +9,7 @@ if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 
 TEAM_NAME="CrysisSync"
 TEAM_KEY="CS"
-CYCLE_WEEKS=1
+CYCLE_WEEKS=2
 CYCLE_START_DAY=0          # 0 = Sunday
 AUTO_ARCHIVE_MONTHS=1
 REVIEW_STATE="In Review"
