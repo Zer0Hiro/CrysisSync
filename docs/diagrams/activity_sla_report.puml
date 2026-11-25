@@ -1,0 +1,67 @@
+@startuml
+title CrisisSync - Activity Diagram 2: SLA Compliance Report Generation & Viewing
+
+|ReportController|
+start
+if (Generation trigger?) then ([End of calendar month])
+  |Scheduler|
+  :Trigger automatic monthly\nSLA report generation (REQ-21);
+  |ReportController|
+  :Determine completed\nreporting month;
+else ([On-demand request])
+  |System Administrator|
+  :Open Reports screen and select\ntarget month (<= 3 actions - REQ-31);
+  |ReportController|
+  :Verify authenticated\nSystem Administrator role (REQ-30);
+  if (Role authorized?) then ([Unauthorized])
+    |System Administrator|
+    :Display access denied error;
+    stop
+  else ([Authorized])
+    |ReportController|
+    if (Selected month has ended?) then ([Current or future month])
+      |System Administrator|
+      :Display invalid month error\nand prompt for past month (REQ-26);
+      stop
+    else ([Completed past month])
+      |ReportController|
+      :Set target reporting month (REQ-25);
+    endif
+  endif
+endif
+
+|ReportController|
+:Request event data from database\nfor target reporting month;
+if (Database and server available?) then ([Unavailable / Timeout])
+  fork
+    :Abort generation safely\nand log error details;
+  fork again
+    :Schedule automatic recovery\n(<= 5 min after DB recovers - REQ-29);
+  fork again
+    |System Administrator|
+    :Display report generation\nfailure alert;
+  end fork
+  stop
+else ([Available])
+  |SLAReportController|
+  :Select non-cancelled events whose last\ntask closed in reporting month (REQ-24);
+  if (Qualifying events exist?) then ([Events found])
+    :Compute elapsed duration per event\n(opening to last task closure);
+    :Group events by EventType and compute\naverage duration per type (REQ-22, REQ-23);
+  else ([No qualifying events])
+    :Populate "No data" for each EventType;
+  endif
+  :Format SLA Compliance Report table\n(<= 30s for up to 10,000 events - REQ-28);
+
+  |ReportController|
+  fork
+    :Store SLA report with\ngeneration timestamp in DB;
+  fork again
+    :Publish report to stored\nreports list for viewing;
+  end fork
+
+  |System Administrator|
+  :Select reporting month and view\nSLA Compliance Report (REQ-27);
+  stop
+endif
+@enduml

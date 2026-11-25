@@ -1,0 +1,89 @@
+@startuml
+title CrisisSync - Activity Diagram 1: Resource Package Reservation & Task Completion
+
+|Dispatcher|
+start
+:Select Ready task on Event Status Screen;
+
+if (Allocation mode?) then ([Manual allocation])
+  :Select required resources for package\n(<= 3 clicks - REQ-13);
+  :Confirm reservation request;
+  |ResourceAllocationController|
+  :Begin DB transaction & lock\nselected resource records;
+  if (All selected resources available?) then ([All available])
+    :Mark package resources as Reserved\nand commit transaction (<= 1.5s - REQ-14);
+  else ([Resource unavailable / Race Condition])
+    :Roll back entire transaction\nand keep task in Ready state (REQ-02, REQ-03);
+    |Dispatcher|
+    :Display conflict notification\nand refresh screen;
+    stop
+  endif
+else ([Automatic allocation])
+  |Dispatcher|
+  :Select allocation criterion (REQ-04, REQ-05);
+  :Confirm automatic allocation request;
+  |ResourceAllocationController|
+  :Initialize retryCounter = 0;
+  repeat
+    :Select best available resource per\npackage item using chosen criterion;
+    if (Candidate found for every item?) then ([All items matched])
+      :Begin DB transaction & lock\ncandidate resource records;
+      if (All candidates still available?) then ([Lock succeeded])
+        :Mark package resources as Reserved\nand commit transaction (<= 3s - REQ-15);
+        :Set allocationSucceeded = true;
+      else ([Concurrent conflict])
+        :Roll back failed attempt;
+        :Increment retryCounter;
+        :Set allocationSucceeded = false;
+      endif
+    else ([No available alternative])
+      :Set allocationSucceeded = false;
+      :Set retryCounter = 2;
+    endif
+  repeat while (Retry automatic allocation?) is ([!allocationSucceeded && retryCounter < 2]) not ([allocationSucceeded || retryCounter >= 2])
+  if (Automatic allocation result?) then ([allocationSucceeded])
+    :Return allocated resource summary;
+  else ([!allocationSucceeded])
+    :Keep task in Ready state (REQ-08);
+    |Dispatcher|
+    :Display allocation failure notification;
+    stop
+  endif
+endif
+
+|TaskManagementController|
+fork
+  :Transition task state\nfrom Ready to Active (REQ-01);
+  :Record reservation in Audit Log;
+fork again
+  |NotificationController|
+  :Broadcast live task & resource update\nto all connected stations (sendToAllClients);
+end fork
+
+|Field Commander|
+:Execute assigned field task;
+:Report task completion on Event Status Screen;
+
+|TaskManagementController|
+:Verify actor is assigned Field Commander\nand task state is Active (REQ-09, REQ-19);
+if (Authorized and Active?) then ([Not authorized or not Active])
+  |Field Commander|
+  :Display authorization / state error;
+  stop
+else ([Authorized and Active])
+  |TaskManagementController|
+  :Set task state to Completed\nwith completion timestamp (REQ-10);
+  fork
+    |ResourceAllocationController|
+    :Release healthy resources to Available\n(keep Faulty/In repair unchanged - REQ-11);
+  fork again
+    |TaskManagementController|
+    :Promote dependent Blocked tasks whose\nprerequisites are all Completed to Ready (REQ-12);
+    :Record task completion in Audit Log;
+  fork again
+    |NotificationController|
+    :Broadcast live status update to all\nrelevant screens (<= 500 ms - REQ-17);
+  end fork
+  stop
+endif
+@enduml
