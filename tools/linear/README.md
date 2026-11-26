@@ -1,6 +1,6 @@
 # Linear setup
 
-`setup.sh` configures the CrysisSync Linear workspace: team **CrysisSync (`CS`)**, 1-week cycles (sprints) starting Sunday; Sprint 1–4 end dates are set to Friday by hand in Linear, leaving Saturday free, auto-archive after 1 month, an **In Review** workflow state, and an **Area** label group (`use-case`, `requirements`, `diagram`, `spec`, `tests`, `docs`). It is safe to re-run; it only adds what is missing.
+`setup.sh` configures the CrysisSync Linear workspace: team **CrysisSync (`CS`)**, 1-week cycles (sprints) running Sunday to Saturday, auto-archive after 1 month, an **In Review** workflow state, and an **Area** label group (`use-case`, `requirements`, `diagram`, `spec`, `tests`, `docs`). It is safe to re-run; it only adds what is missing.
 
 ## Run it
 1. Linear → Settings → **Security & access → Personal API keys** → *New API key* (Full access, all teams). Copy it.
