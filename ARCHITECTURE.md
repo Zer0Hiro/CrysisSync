@@ -14,7 +14,13 @@
 ## 2. ECB Architecture
 
 ### 2.1 Overview
-<!-- Short description of the client/server split and the ECB layers -->
+The design follows the Entity-Control-Boundary (ECB) pattern:
+- **Boundary** classes are the interface with the actors (for example: screens).
+- **Control** classes manage the flow of each use case. Client-side controllers
+  only send requests and handle responses; server-side controllers hold the
+  business logic (allocation, task state transitions, reports).
+- **Entity** classes hold the domain data (events, tasks, resources, reports)
+  and are shared by client and server, since they are sent over the network.
 
 ### 2.2 Class Mapping
 
