@@ -1,89 +1,114 @@
 @startuml
-title CrisisSync - Activity Diagram 1: Resource Package Reservation & Task Completion
+title CrisisSync - Process 1: Resource Package Reservation, Task Completion, and Resource Release
 
 |Dispatcher|
 start
-:Select Ready task on Event Status Screen;
+:Select task on live Event Status Screen\nand initiate resource reservation;
 
-if (Allocation mode?) then ([Manual allocation])
-  :Select required resources for package\n(<= 3 clicks - REQ-13);
-  :Confirm reservation request;
-  |ResourceAllocationController|
-  :Begin DB transaction & lock\nselected resource records;
-  if (All selected resources available?) then ([All available])
-    :Mark package resources as Reserved\nand commit transaction (<= 1.5s - REQ-14);
-  else ([Resource unavailable / Race Condition])
-    :Roll back entire transaction\nand keep task in Ready state (REQ-02, REQ-03);
-    |Dispatcher|
-    :Display conflict notification\nand refresh screen;
-    stop
-  endif
-else ([Automatic allocation])
+|TaskManagementController|
+:Validate authenticated/authorized Dispatcher session (REQ-19);\nverify task state and TLS 1.3 transport (REQ-20);
+
+if (Authorized Dispatcher\nAND task is Ready?) then ([no])
   |Dispatcher|
-  :Select allocation criterion (REQ-04, REQ-05);
-  :Confirm automatic allocation request;
-  |ResourceAllocationController|
-  :Initialize retryCounter = 0;
-  repeat
-    :Select best available resource per\npackage item using chosen criterion;
-    if (Candidate found for every item?) then ([All items matched])
-      :Begin DB transaction & lock\ncandidate resource records;
-      if (All candidates still available?) then ([Lock succeeded])
-        :Mark package resources as Reserved\nand commit transaction (<= 3s - REQ-15);
-        :Set allocationSucceeded = true;
-      else ([Concurrent conflict])
-        :Roll back failed attempt;
-        :Increment retryCounter;
-        :Set allocationSucceeded = false;
-      endif
-    else ([No available alternative])
-      :Set allocationSucceeded = false;
-      :Set retryCounter = 2;
-    endif
-  repeat while (Retry automatic allocation?) is ([!allocationSucceeded && retryCounter < 2]) not ([allocationSucceeded || retryCounter >= 2])
-  if (Automatic allocation result?) then ([allocationSucceeded])
-    :Return allocated resource summary;
-  else ([!allocationSucceeded])
-    :Keep task in Ready state (REQ-08);
-    |Dispatcher|
-    :Display allocation failure notification;
-    stop
-  endif
-endif
-
-|TaskManagementController|
-fork
-  :Transition task state\nfrom Ready to Active (REQ-01);
-  :Record reservation in Audit Log;
-fork again
-  |NotificationController|
-  :Broadcast live task & resource update\nto all connected stations (sendToAllClients);
-end fork
-
-|Field Commander|
-:Execute assigned field task;
-:Report task completion on Event Status Screen;
-
-|TaskManagementController|
-:Verify actor is assigned Field Commander\nand task state is Active (REQ-09, REQ-19);
-if (Authorized and Active?) then ([Not authorized or not Active])
-  |Field Commander|
-  :Display authorization / state error;
+  :View refusal message\n(reservation not allowed);
   stop
-else ([Authorized and Active])
-  |TaskManagementController|
-  :Set task state to Completed\nwith completion timestamp (REQ-10);
-  fork
+else ([yes])
+  |ResourceAllocationController|
+  :Retrieve package (exactly 1 Field Commander)\nand available resources;
+
+  |Dispatcher|
+  if (Choose reservation mode) then ([Manual Reservation])
+    :Select required available resources\n(<= 3 clicks, REQ-13)\nand confirm reservation;
+  else ([Automatic Allocation])
+    :Select allocation criterion\n(e.g., geographic proximity, REQ-04, REQ-05);
     |ResourceAllocationController|
-    :Release healthy resources to Available\n(keep Faulty/In repair unchanged - REQ-11);
-  fork again
+    :Complete allocation, including alternatives,\nwithin 3 seconds (REQ-15);
+    :Initialize alternative attempt count\nfor each package item to 0;
+    :Select the best available resource\nfor each package item;
+    if (Available resource found\nfor every package item?) then ([no])
+      |Dispatcher|
+      :Receive automatic allocation failure alert\n(task remains Ready);
+      stop
+    else ([yes])
+    endif
+  endif
+
+  |ResourceAllocationController|
+  repeat
+    :Begin one SQL transaction;\nlock and verify all selected resources;
+
+    if (All locked resources Available?) then ([yes])
+      :Mark every package resource Reserved;\ntransition task Ready to Active;\ncommit and respond within 1.5 s (REQ-01, REQ-14, REQ-18);
+    else ([no (conflict)])
+      :Rollback transaction;\nreserve no resources (REQ-02);
+      if (Automatic Allocation?) then ([yes])
+        if (Conflicting resource has\nalternative attempt remaining?\n(max 2 alternatives per resource)) then ([yes])
+          :Increment that resource's attempt count;
+          :Select next-best available alternative\nfor the conflicting resource (REQ-06, REQ-07);
+          if (Alternative resource found?) then ([yes])
+            :Substitute the conflicting resource;
+          else ([no])
+            |Dispatcher|
+            :Receive allocation failure alert\nand view refreshed screen\n(task remains Ready, REQ-03, REQ-08);
+            stop
+          endif
+        else ([no])
+          |Dispatcher|
+          :Receive allocation failure alert\nand view refreshed screen\n(task remains Ready, REQ-03, REQ-08);
+          stop
+        endif
+      else ([no (manual)])
+        |Dispatcher|
+        :Receive conflict notification\nand view refreshed screen\n(task remains Ready, REQ-03);
+        if (Select alternative resources\nand retry manually?) then ([yes])
+          :Select available replacement(s)\nand confirm reservation;
+        else ([no])
+          stop
+        endif
+      endif
+    endif
+    |ResourceAllocationController|
+  repeat while (Reservation committed?) is ([no (retry)]) not ([yes])
+
+  fork
     |TaskManagementController|
-    :Promote dependent Blocked tasks whose\nprerequisites are all Completed to Ready (REQ-12);
-    :Record task completion in Audit Log;
+    :Record reservation and Active transition\nin Audit Log (REQ-01);
   fork again
     |NotificationController|
-    :Broadcast live status update to all\nrelevant screens (<= 500 ms - REQ-17);
+    :Push task and resource statuses\nto relevant screens (REQ-14, REQ-15);
   end fork
-  stop
+
+  |Field Commander|
+  :View assigned Active task on Event Status Screen\nand execute task in the field;
+  :Report task completion;
+
+  |TaskManagementController|
+  :Validate session and assigned Field Commander (REQ-09, REQ-19);\nconfirm task is Active;
+
+  if (Authorized Field Commander\nAND task is Active?) then ([no])
+    |Field Commander|
+    :View rejection message\n(task remains Active);
+    stop
+  else ([yes])
+    |TaskManagementController|
+    :Begin one SQL transaction;
+    :Transition task Active to Completed;\nrecord completion timestamp (REQ-10);
+    :Detach package resources;\nreturn non-faulty resources to Available\n(Faulty/In repair stays unchanged, REQ-11);
+    :Set dependent tasks to Ready\nonly when every prerequisite is Completed (REQ-12);
+    :Commit completion and release transaction;
+
+    fork
+      |TaskManagementController|
+      :Record completion and resource\nrelease events in Audit Log;
+    fork again
+      |NotificationController|
+      :Push Completed/Ready tasks and\nAvailable resources within 500 ms (REQ-17);
+    end fork
+
+    |Dispatcher|
+    :View updated Event Status Screen;
+    stop
+  endif
 endif
+
 @enduml
