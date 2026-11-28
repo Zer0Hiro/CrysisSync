@@ -28,8 +28,3 @@ Thumbs.db
 
 # Assignment zips
 *.zip
-# Local secrets (Linear API key etc.) — never commit; see .env.example
-.env
-
-# Cloudflare wrangler local cache
-.wrangler/
