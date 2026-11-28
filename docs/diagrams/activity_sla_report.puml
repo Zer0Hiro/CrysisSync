@@ -1,67 +1,84 @@
 @startuml
-title CrisisSync - Activity Diagram 2: SLA Compliance Report Generation & Viewing
+title CrisisSync - Activity Diagram 2: Produce & View SLA Report
 
+' Lane order (left to right)
+|Scheduler|
+|System Administrator|
 |ReportController|
+|SLAReportGenerator|
+
+|Scheduler|
 start
-if (Generation trigger?) then ([End of calendar month])
-  |Scheduler|
-  :Trigger automatic monthly\nSLA report generation (REQ-21);
-  |ReportController|
-  :Determine completed\nreporting month;
-else ([On-demand request])
+if (Report trigger?) then ([End of calendar month])
+  :Detect end of calendar month;
+  :Request SLA report for\nthe month that ended (REQ-21);
+else ([Administrator request])
   |System Administrator|
-  :Open Reports screen and select\ntarget month (<= 3 actions - REQ-31);
+  :Open reports screen;
   |ReportController|
-  :Verify authenticated\nSystem Administrator role (REQ-30);
-  if (Role authorized?) then ([Unauthorized])
+  :Verify authenticated\nSystem Administrator (REQ-30);
+  if (Authorized?) then ([Not authorized])
     |System Administrator|
-    :Display access denied error;
+    :Display access denied;
     stop
   else ([Authorized])
+  endif
+  |System Administrator|
+  if (Administrator action?) then ([Generate report])
+    repeat
+      :Select past reporting month;
+      :Request SLA report\n(<= 3 actions - REQ-25, REQ-31);
+    backward:Prompt for a completed month (REQ-26);
+    repeat while (Selected month has ended?) is ([No]) not ([Yes])
+  else ([View existing report])
+    |System Administrator|
+    :Select stored SLA report\nby reporting month (REQ-27);
     |ReportController|
-    if (Selected month has ended?) then ([Current or future month])
-      |System Administrator|
-      :Display invalid month error\nand prompt for past month (REQ-26);
-      stop
-    else ([Completed past month])
-      |ReportController|
-      :Set target reporting month (REQ-25);
-    endif
+    :Retrieve stored SLA report;
+    |System Administrator|
+    :View SLA report table (REQ-27);
+    stop
   endif
 endif
 
 |ReportController|
-:Request event data from database\nfor target reporting month;
-if (Database and server available?) then ([Unavailable / Timeout])
-  fork
-    :Abort generation safely\nand log error details;
-  fork again
-    :Schedule automatic recovery\n(<= 5 min after DB recovers - REQ-29);
-  fork again
-    |System Administrator|
-    :Display report generation\nfailure alert;
-  end fork
-  stop
-else ([Available])
-  |SLAReportController|
-  :Select non-cancelled events whose last\ntask closed in reporting month (REQ-24);
-  if (Qualifying events exist?) then ([Events found])
-    :Compute elapsed duration per event\n(opening to last task closure);
-    :Group events by EventType and compute\naverage duration per type (REQ-22, REQ-23);
-  else ([No qualifying events])
-    :Populate "No data" for each EventType;
-  endif
-  :Format SLA Compliance Report table\n(<= 30s for up to 10,000 events - REQ-28);
+:Retrieve report data from DB;
 
-  |ReportController|
-  fork
-    :Store SLA report with\ngeneration timestamp in DB;
-  fork again
-    :Publish report to stored\nreports list for viewing;
-  end fork
+' ===== BEGIN DB-FAILURE =====
+while (DB and server available?) is ([Unavailable / timeout])
+  group Exception: DB / server unavailable (REQ-29, TEST-06) {
+    :Abort generation and log failure;
+    fork
+      :Send failure alert to\nSystem Administrator;
+    fork again
+      :Wait until DB and server\nare available again;
+    end fork
+    :Retry report data retrieval\n(<= 5 min after recovery);
+  }
+endwhile ([Available])
+' ===== END DB-FAILURE =====
 
-  |System Administrator|
-  :Select reporting month and view\nSLA Compliance Report (REQ-27);
-  stop
+|SLAReportGenerator|
+:Select events whose last task\nclosed in reporting month (REQ-24);
+if (Qualifying events found?) then ([Yes])
+  :Compute time from event opening\nto last task closure per event (REQ-23);
+  :Group events by event type (REQ-22);
+  :Compute average time per event type;
+else ([No])
+  :Mark "No data" for every event type;
 endif
+:Build SLA table (event type, average time)\n(<= 30 s for 10,000 events - REQ-28);
+
+|ReportController|
+:Store SLA report\nwith generation time;
+if (Trigger source?) then ([Scheduled])
+  stop
+else ([On-demand])
+endif
+
+|ReportController|
+:Retrieve stored SLA report;
+|System Administrator|
+:View SLA report table (REQ-27);
+stop
 @enduml
