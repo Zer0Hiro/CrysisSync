@@ -1,32 +1,18 @@
 #!/usr/bin/env bash
-# Configure the CrysisSync Linear workspace: team CS, weekly cycles, "In Review" state, Area labels.
+# Configure the CrysisSync Linear workspace: team CS, weekly cycles (Sun-Sat), "In Review" state, Area labels.
 # Idempotent: re-running only changes what is missing. Needs curl + jq and LINEAR_API_KEY in <repo>/.env.
 set -euo pipefail
 
-ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
-: "${LINEAR_API_KEY:?LINEAR_API_KEY is empty - put your personal API key in $ROOT/.env (see tools/linear/README.md)}"
+source "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 
 TEAM_NAME="CrysisSync"
 TEAM_KEY="CS"
 CYCLE_WEEKS=1
-CYCLE_START_DAY=0          # 0 = Sunday
+CYCLE_START_DAY=0          # 0 = Sunday (sprints run Sunday-Saturday)
 AUTO_ARCHIVE_MONTHS=1
 REVIEW_STATE="In Review"
 LABEL_GROUP="Area"
 AREA_LABELS=(use-case requirements diagram spec tests docs)
-
-gql() { # gql QUERY [VARIABLES_JSON] -> prints .data, exits on API errors
-  local resp vars=${2:-}
-  [[ -n "$vars" ]] || vars='{}'
-  resp=$(jq -n --arg q "$1" --argjson v "$vars" '{query: $q, variables: $v}' |
-    curl -sS https://api.linear.app/graphql \
-      -H "Content-Type: application/json" -H "Authorization: $LINEAR_API_KEY" --data @-)
-  if jq -e '.errors' <<<"$resp" >/dev/null; then
-    echo "Linear API error:" >&2; jq '.errors' <<<"$resp" >&2; exit 1
-  fi
-  jq '.data' <<<"$resp"
-}
 
 TEAM_FIELDS='id name key cyclesEnabled cycleDuration cycleStartDay autoArchivePeriod
   states { nodes { id name type position } }
