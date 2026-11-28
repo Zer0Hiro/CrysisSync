@@ -22,11 +22,11 @@ else ([yes])
   else ([Automatic Allocation])
     :Select allocation criterion\n(e.g., geographic proximity, REQ-04, REQ-05);
     |ResourceAllocationController|
-        :Initialize alternative attempt count\nfor each package item to 0;
-        note right
-          REQ-15: Complete automatic allocation,
-          including alternatives, within 3 seconds
-        end note
+    :Initialize alternative attempt count\nfor each package item to 0;
+    note right
+      REQ-15: Complete automatic allocation,
+      including alternatives, within 3 seconds
+    end note
     :Select the best available resource\nfor each package item;
     if (Available resource found\nfor every package item?) then ([no])
       |Dispatcher|
