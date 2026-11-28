@@ -22,8 +22,11 @@ else ([yes])
   else ([Automatic Allocation])
     :Select allocation criterion\n(e.g., geographic proximity, REQ-04, REQ-05);
     |ResourceAllocationController|
-    :Complete allocation, including alternatives,\nwithin 3 seconds (REQ-15);
-    :Initialize alternative attempt count\nfor each package item to 0;
+        :Initialize alternative attempt count\nfor each package item to 0;
+        note right
+          REQ-15: Complete automatic allocation,
+          including alternatives, within 3 seconds
+        end note
     :Select the best available resource\nfor each package item;
     if (Available resource found\nfor every package item?) then ([no])
       |Dispatcher|
@@ -75,7 +78,7 @@ else ([yes])
     :Record reservation and Active transition\nin Audit Log (REQ-01);
   fork again
     |NotificationController|
-    :Push task and resource statuses\nto relevant screens (REQ-14, REQ-15);
+    :Push task and resource statuses\nto relevant screens;
   end fork
 
   |Field Commander|
