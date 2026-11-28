@@ -1,15 +1,7 @@
 # CrisisSync Architecture
 
 ## 1. Team
-
 **Group:** G11
-
-| Member | Role         | Area of Responsibility |
-|--------|--------------|------------------------|
-|        |              |                        |
-|        |              |                        |
-|        |              |                        |
-|        |              |                        |
 
 ## 2. ECB Architecture
 
