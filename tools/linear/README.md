@@ -13,6 +13,15 @@
 Never commit `.env`. Revoke the key in Linear when you no longer need it.
 
 ## Team conventions
-- Branches: Linear → Settings → Account → Preferences → *Git branch format* = `planning/{issue-identifier}-{issue-title}`, then copy the branch name from an issue (`Ctrl/Cmd+Shift+.`).
-- PRs: put `Fixes CS-12` in the PR description to link and auto-close the issue.
+- One-time per person: Linear → Settings → Account → *Connected accounts* → GitHub, and *Preferences → Git branch format* = `planning/{issue-identifier}-{issue-title}`.
 - Every issue gets one assignee and one Area label.
+
+### Linking PRs to issues (automatic, via Linear's GitHub integration)
+A PR is attached to issue `CS-12` when `CS-12` appears in any of:
+- **the branch name** — easiest: open the issue in Linear and press `Ctrl/Cmd+Shift+.` to copy a ready branch name (e.g. `planning/cs-12-ecb-class-diagram`);
+- **the PR title or description** (the PR template pre-fills `Fixes CS-`):
+  - `Fixes CS-12` / `Closes CS-12` — link, and merging moves the issue to **Done**;
+  - `Part of CS-12` / `Ref CS-12` — link only, the issue stays open;
+- **commit messages** containing `CS-12` also show on the issue.
+
+Status follows the PR: draft or opened → **In Progress**, review requested → **In Review**, merged → **Done**.
